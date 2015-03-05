@@ -1,9 +1,9 @@
 import io
 import socket
 import struct
-
 from collections import namedtuple
 
+import six
 from .exception import DeserializationException
 
 
@@ -31,14 +31,14 @@ class Transport(object):
 
 
 class Packet(object):
-    CMD_REQUEST = 0         # Named request message
-    CMD_RESPONSE = 1        # Unnamed response message for a request
-    CMD_UNKNOWN = 2         # Unnamed response if requested command is unknown
-    EVENT_REGISTER = 3      # Named event registration request
-    EVENT_UNREGISTER = 4    # Named event de-registration request
-    EVENT_CONFIRM = 5       # Unnamed confirmation for event (de-)registration
-    EVENT_UNKNOWN = 6       # Unnamed response if event (de-)registration failed
-    EVENT = 7               # Named event message
+    CMD_REQUEST = 0  # Named request message
+    CMD_RESPONSE = 1  # Unnamed response message for a request
+    CMD_UNKNOWN = 2  # Unnamed response if requested command is unknown
+    EVENT_REGISTER = 3  # Named event registration request
+    EVENT_UNREGISTER = 4  # Named event de-registration request
+    EVENT_CONFIRM = 5  # Unnamed confirmation for event (de-)registration
+    EVENT_UNKNOWN = 6  # Unnamed response if event (de-)registration failed
+    EVENT = 7  # Named event message
 
     ParsedPacket = namedtuple(
         "ParsedPacket",
@@ -52,8 +52,12 @@ class Packet(object):
 
     @classmethod
     def _named_request(cls, request_type, request, message=None):
+        if not isinstance(request, six.binary_type):
+            request = request.encode('ascii')
         payload = struct.pack("!BB", request_type, len(request)) + request
         if message is not None:
+            if not isinstance(message, six.binary_type):
+                message = message.encode('ascii')
             return payload + message
         else:
             return payload
@@ -84,12 +88,12 @@ class Packet(object):
 
 
 class Message(object):
-    SECTION_START = 1       # Begin a new section having a name
-    SECTION_END = 2         # End a previously started section
-    KEY_VALUE = 3           # Define a value for a named key in the section
-    LIST_START = 4          # Begin a named list for list items
-    LIST_ITEM = 5           # Define an unnamed item value in the current list
-    LIST_END = 6            # End a previously started list
+    SECTION_START = 1  # Begin a new section having a name
+    SECTION_END = 2  # End a previously started section
+    KEY_VALUE = 3  # Define a value for a named key in the section
+    LIST_START = 4  # Begin a named list for list items
+    LIST_ITEM = 5  # Define an unnamed item value in the current list
+    LIST_END = 6  # End a previously started list
 
     @classmethod
     def serialize(cls, message):
